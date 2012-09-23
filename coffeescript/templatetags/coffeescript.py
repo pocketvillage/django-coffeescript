@@ -57,12 +57,20 @@ def do_inlinecoffeescript(parser, token):
 def coffeescript(path):
 
     try:
-        STATIC_ROOT = settings.STATIC_ROOT
-    except AttributeError:
-        STATIC_ROOT = settings.MEDIA_ROOT
-
-    full_path = os.path.join(STATIC_ROOT, path)
-    filename = os.path.split(path)[-1]
+        from django.contrib.staticfiles.finders import \
+            FileSystemFinder, AppDirectoriesFinder
+        some_files = AppDirectoriesFinder().find(path)
+        more_files = FileSystemFinder().find(path)
+        full_path = (some_files + more_files)[0]
+        filename = os.path.split(full_path)[-1]
+    except ImportError:
+        # normal, non-statcfiles-enabled way:
+        try:
+            STATIC_ROOT = settings.STATIC_ROOT
+        except AttributeError:
+            STATIC_ROOT = settings.MEDIA_ROOT
+        full_path = os.path.join(STATIC_ROOT, path)
+        filename = os.path.split(path)[-1]
 
     output_directory = os.path.join(STATIC_ROOT, COFFEESCRIPT_OUTPUT_DIR, os.path.dirname(path))
 
